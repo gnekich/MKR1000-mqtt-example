@@ -27,9 +27,9 @@ const char client_id[] = CLIENT_ID;
 const char mqtt_username[] = MQTT_USERNAME;
 const char mqtt_password[] = MQTT_PASSWORD;
 
-const char topic[] = "lampice";
-const char topic2[] = "relay";
-const char topic3[] = "senzor-temperature";
+const char topic1[] = "kiok/feeds/lampice";
+const char topic2[] = "kiok/feeds/relay";
+//const char topic3[] = "kiok/feeds/senzor-temperature";
 
 void setup()
 {
@@ -98,23 +98,23 @@ void setup()
   mqttClient.onMessage(onMqttMessage);
 
   Serial.print("Subscribing to topic: ");
-  Serial.println(topic);
+  Serial.println(topic1);
   Serial.println();
 
   // Subscribe to a topic
-  mqttClient.subscribe(topic);
+  mqttClient.subscribe(topic1);
   mqttClient.subscribe(topic2);
-  mqttClient.subscribe(topic3);
+  //mqttClient.subscribe(topic3);
 
   // Topics can be unsubscribed using:
   // mqttClient.unsubscribe(topic);
 
   Serial.print("Topic: ");
-  Serial.println(topic);
+  Serial.println(topic1);
   Serial.print("Topic: ");
   Serial.println(topic2);
-  Serial.print("Topic: ");
-  Serial.println(topic3);
+  //Serial.print("Topic: ");
+  //Serial.println(topic3);
 
   Serial.println();
 }
@@ -129,7 +129,7 @@ void loop()
   if (buttonTouchState)
   {
     Serial.println("Taknuo si me! Touch senzor V2 aktivan!");
-    mqttClient.beginMessage("lampice");
+    mqttClient.beginMessage(topic1);
     mqttClient.print("ON");
     mqttClient.endMessage();
     delay(300);
@@ -139,11 +139,11 @@ void loop()
   if (buttonWhiteState)
   {
     Serial.println("OFF Button pressed!");
-    mqttClient.beginMessage("lampice");
+    mqttClient.beginMessage(topic1);
     mqttClient.print("OFF");
     mqttClient.endMessage();
 
-    mqttClient.beginMessage("relay");
+    mqttClient.beginMessage(topic2);
     mqttClient.print("OFF");
     mqttClient.endMessage();
     delay(300);
@@ -153,11 +153,11 @@ void loop()
   if (buttonRedState)
   {
     Serial.println("ON Button pressed!");
-    mqttClient.beginMessage("lampice");
+    mqttClient.beginMessage(topic1);
     mqttClient.print("ON");
     mqttClient.endMessage();
 
-    mqttClient.beginMessage("relay");
+    mqttClient.beginMessage(topic2);
     mqttClient.print("ON");
     mqttClient.endMessage();
     delay(300);
@@ -187,7 +187,7 @@ void onMqttMessage(int messageSize)
   Serial.println(messagePayload);
 
   // Logika za komande
-  if (topic == "lampice")
+  if (topic == topic1)
   {
     if (messagePayload == "ON" || messagePayload == "on") // Sometimes it is easier to check than to lowercase ;)
     {
@@ -199,7 +199,7 @@ void onMqttMessage(int messageSize)
     }
   }
 
-  if (topic == "relay")
+  if (topic == topic2)
   {
     if (messagePayload == "ON" || messagePayload == "on")
     {
