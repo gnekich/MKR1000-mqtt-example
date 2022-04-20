@@ -12,6 +12,10 @@
 #include "MKR1000_defs.h"
 #include <string>
 
+// #include <Servo.h>
+
+// Servo MyServo;
+
 // Secrets for the WiFi are saved in arduino_secrets.h please update it there
 char ssid[] = SECRET_SSID; // your network SSID
 char pass[] = SECRET_PASS; // your network password
@@ -29,7 +33,10 @@ const char mqtt_password[] = MQTT_PASSWORD;
 
 const char topic1[] = "kiok/feeds/lampice";
 const char topic2[] = "kiok/feeds/relay";
-//const char topic3[] = "kiok/feeds/senzor-temperature";
+const char topic3[] = "kiok/feeds/motor";
+
+const int shouldIListenToTopic3 = 1; // Flip this to 0 if you don't need to listen for third topic
+int motorWorking = 0;
 
 void setup()
 {
@@ -42,6 +49,17 @@ void setup()
   // Set outputs
   pinMode(D7, OUTPUT); // Red Led
   pinMode(D8, OUTPUT); // Relay
+
+  // l293d
+  pinMode(D11, OUTPUT); // Motor 1 direction control 1
+  pinMode(D12, OUTPUT); // Motor 1 direction control 2
+  pinMode(A2, OUTPUT);  // Motor speed by using PWM
+
+  digitalWrite(D11, HIGH);
+  digitalWrite(D12, LOW);
+
+  // Set servo
+  // MyServo.attach(D9);
 
   // Initialize serial and wait for port to open:
   Serial.begin(9600);
@@ -104,7 +122,7 @@ void setup()
   // Subscribe to a topic
   mqttClient.subscribe(topic1);
   mqttClient.subscribe(topic2);
-  //mqttClient.subscribe(topic3);
+  mqttClient.subscribe(topic3);
 
   // Topics can be unsubscribed using:
   // mqttClient.unsubscribe(topic);
@@ -113,8 +131,8 @@ void setup()
   Serial.println(topic1);
   Serial.print("Topic: ");
   Serial.println(topic2);
-  //Serial.print("Topic: ");
-  //Serial.println(topic3);
+  Serial.print("Topic: ");
+  Serial.println(topic3);
 
   Serial.println();
 }
@@ -132,7 +150,11 @@ void loop()
     mqttClient.beginMessage(topic1);
     mqttClient.print("ON");
     mqttClient.endMessage();
-    delay(300);
+
+    mqttClient.beginMessage(topic3);
+    mqttClient.print("ON");
+    mqttClient.endMessage();
+    delay(1000);
   }
 
   int buttonWhiteState = digitalRead(D1);
@@ -161,6 +183,18 @@ void loop()
     mqttClient.print("ON");
     mqttClient.endMessage();
     delay(300);
+  }
+
+  if (motorWorking == 1)
+  {
+    // Kick
+    // analogWrite(A2, 255);
+    // delay(25);
+    // Run
+    // for (int i = 145; i >= 30; --i) {
+    //  analogWrite(A2, i);
+    //  delay(30);
+    //}
   }
 }
 
@@ -208,6 +242,23 @@ void onMqttMessage(int messageSize)
     else if (messagePayload == "OFF" || messagePayload == "off")
     {
       digitalWrite(D8, LOW);
+    }
+  }
+
+  if (topic == topic3 && shouldIListenToTopic3 == 1)
+  {
+    if (messagePayload == "ON" || messagePayload == "on")
+    {
+      motorWorking = 1;
+      for (int i = 145; i >= 50; --i)
+      {
+        analogWrite(A2, i);
+        delay(30);
+      }
+    }
+    else if (messagePayload == "OFF" || messagePayload == "off")
+    {
+      motorWorking = 0;
     }
   }
 
